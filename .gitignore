@@ -1,34 +1,62 @@
-*.log
-.DS_Store
-.env
-.env.backup
-.env.production
-.phpactor.json
-.phpunit.result.cache
-/.fleet
-/.idea
-/.nova
-/.phpunit.cache
-/.vscode
-/.zed
-/auth.json
+# ============ Laravel Core ============
+/vendor
 /node_modules
 /public/build
 /public/hot
 /public/storage
 /storage/*.key
 /storage/pail
-/vendor
-Homestead.json
-Homestead.yaml
-Thumbs.db
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/logs/*
+!storage/logs/.gitignore
+!storage/framework/.gitignore
+!storage/framework/cache/.gitignore
+!storage/framework/sessions/.gitignore
+!storage/framework/testing/.gitignore
+!storage/framework/views/.gitignore
 
-# NEOVAM SMS - local-only files
+# ============ Secrets ============
 .env
 .env.*
 !.env.example
-database/database.sqlite
+
+# ============ SQLite ============
 database/*.sqlite
-*.sqlite
-storage/logs/*.log
-public/storage
+database/*.sqlite-journal
+database/*.sqlite-shm
+database/*.sqlite-wal
+
+# ============ Backups ============
+storage/app/backups/
+storage/app/private/
+*.zip
+*.tar.gz
+
+# ============ IDE / OS ============
+.idea
+.vscode
+.fleet
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ============ Build artifacts ============
+.phpunit.result.cache
+.phpunit.cache
+Homestead.json
+Homestead.yaml
+auth.json
+npm-debug.log
+yarn-error.log
+/.fleet
+/.idea
+/.vscode
+
+# ============ Temporary ============
+*.log
+*.tmp
+/storage/debugbar

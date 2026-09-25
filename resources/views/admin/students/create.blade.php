@@ -71,6 +71,21 @@
             <input type="email" name="parent_email" value="{{ old("parent_email") }}" class="w-full border rounded px-3 py-2">
         </div>
 
+        <hr>
+        <h3 class="font-bold text-blue-900">Login Access</h3>
+        <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded">
+            <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" name="enable_login" value="1" {{ old("enable_login") ? "checked" : "" }} class="w-5 h-5 mt-0.5">
+                <div>
+                    <div class="font-semibold text-blue-900">Enable student login</div>
+                    <div class="text-sm text-gray-600">
+                        By default, students do NOT have login accounts. Only enable this for students who should log in themselves (usually A-Level or Secondary).
+                        When enabled, a user account is auto-created with a default password sent to the parent.
+                    </div>
+                </div>
+            </label>
+        </div>
+
         <button type="submit" class="bg-blue-900 text-white px-6 py-2 rounded hover:bg-blue-800">Admit Student</button>
     </form>
 
@@ -83,22 +98,17 @@
 
             function loadClassrooms(level, keepSelected) {
                 classroomSelect.innerHTML = "<option value=\"\">-- Loading --</option>";
-
                 if (!level) {
                     classroomSelect.innerHTML = "<option value=\"\">-- Select Level First --</option>";
                     return;
                 }
-
-                fetch(endpoint + "?level=" + encodeURIComponent(level), {
-                    headers: { "Accept": "application/json" }
-                })
+                fetch(endpoint + "?level=" + encodeURIComponent(level), { headers: { "Accept": "application/json" } })
                 .then(function (res) { return res.json(); })
                 .then(function (data) {
                     if (!data.length) {
                         classroomSelect.innerHTML = "<option value=\"\">-- No classrooms available --</option>";
                         return;
                     }
-
                     var html = "<option value=\"\">-- Select Classroom --</option>";
                     data.forEach(function (room) {
                         var label = room.stream ? room.name + " (" + room.stream + ")" : room.name;
@@ -108,7 +118,7 @@
                     classroomSelect.innerHTML = html;
                 })
                 .catch(function () {
-                    classroomSelect.innerHTML = "<option value=\"\">-- Error loading --</option>";
+                    classroomSelect.innerHTML = "<option value=\"\">-- Error --</option>";
                 });
             }
 

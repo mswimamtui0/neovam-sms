@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Jobs;
 
 use App\Services\Sms\SmsService;
@@ -22,7 +21,10 @@ class SendEmergencySms implements ShouldQueue
 
     public function handle(SmsService $sms): void
     {
-        $message = "URGENT: {$this->studentName} — {$this->incidentType}. {$this->description}. Please contact the school immediately.";
-        $sms->send($this->parentPhone, $message, 'emergency');
+        $sms->sendTemplate($this->parentPhone, "emergency", [
+            "student_name"  => $this->studentName,
+            "incident_type" => $this->incidentType,
+            "description"   => $this->description,
+        ], "en");
     }
 }

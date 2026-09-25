@@ -1,7 +1,7 @@
 @extends("layouts.app")
 @section("title", "Submit Report")
 @section("content")
-    <h1 class="text-3xl font-bold text-blue-900 mb-6">Submit Report</h1>
+    <h1 class="text-3xl font-bold text-blue-900 mb-6">Submit Performance Report</h1>
     <form method="POST" action="{{ route("teacher.reports.store") }}" class="bg-white rounded shadow p-6 space-y-4 max-w-2xl">
         @csrf
         <div>
@@ -21,6 +21,16 @@
             <div>
                 <label class="block font-semibold mb-1">Period End</label>
                 <input type="date" name="week_end" class="w-full border rounded px-3 py-2" required>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block font-semibold mb-1">Periods Taught</label>
+                <input type="number" name="periods_taught" min="0" value="0" class="w-full border rounded px-3 py-2">
+            </div>
+            <div>
+                <label class="block font-semibold mb-1">Students Absent</label>
+                <input type="number" name="students_absent" min="0" value="0" class="w-full border rounded px-3 py-2">
             </div>
         </div>
         <div>

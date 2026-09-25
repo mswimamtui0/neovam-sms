@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Jobs;
 
 use App\Services\Sms\SmsService;
@@ -22,7 +21,10 @@ class SendResultSms implements ShouldQueue
 
     public function handle(SmsService $sms): void
     {
-        $message = "Dear Parent, results for {$this->studentName} ({$this->examName}) are ready. {$this->summary}. Login to view full report.";
-        $sms->send($this->parentPhone, $message, 'result');
+        $sms->sendTemplate($this->parentPhone, "result", [
+            "student_name" => $this->studentName,
+            "exam_name"    => $this->examName,
+            "summary"      => $this->summary,
+        ], "en");
     }
 }

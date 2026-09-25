@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Register — NEOVAM SMS</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite(["resources/css/app.css", "resources/js/app.js"])
 </head>
 <body class="min-h-screen bg-gradient-to-br from-blue-900 to-blue-700 flex items-center justify-center">
     <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">

@@ -46,4 +46,20 @@ Route::middleware(["auth", "role:academic_master,head_of_school,admin"])
 
     Route::get("/reports",              [AcademicController::class, "reports"])->name("reports");
     Route::get("/national-exams",       [AcademicController::class, "nationalExams"])->name("national");
+
+    /* ============ PROMOTIONS ============ */
+    Route::get("/promotions",                    [\App\Http\Controllers\Academic\PromotionController::class, "index"])->name("promotions");
+    Route::get("/promotions/years/create",       [\App\Http\Controllers\Academic\PromotionController::class, "createYear"])->name("promotions.years.create");
+    Route::post("/promotions/years",             [\App\Http\Controllers\Academic\PromotionController::class, "storeYear"])->name("promotions.years.store");
+    Route::get("/promotions/preview",            [\App\Http\Controllers\Academic\PromotionController::class, "preview"])->name("promotions.preview");
+    Route::post("/promotions/execute",           [\App\Http\Controllers\Academic\PromotionController::class, "execute"])->name("promotions.execute");
+    Route::get("/promotions/history",            [\App\Http\Controllers\Academic\PromotionController::class, "history"])->name("promotions.history");
+    Route::post("/promotions/hold-back",         [\App\Http\Controllers\Academic\PromotionController::class, "holdBack"])->name("promotions.hold-back");
+
+    /* ============ REPORT CARDS (PDF) ============ */
+    Route::get("/report-cards",                          [\App\Http\Controllers\Academic\ReportCardController::class, "index"])->name("report-cards.index");
+    Route::get("/report-cards/exam/{exam}",              [\App\Http\Controllers\Academic\ReportCardController::class, "exam"])->name("report-cards.exam");
+    Route::get("/report-cards/exam/{exam}/student/{student}",         [\App\Http\Controllers\Academic\ReportCardController::class, "single"])->name("report-cards.single");
+    Route::get("/report-cards/exam/{exam}/student/{student}/download",[\App\Http\Controllers\Academic\ReportCardController::class, "download"])->name("report-cards.download");
+    Route::get("/report-cards/exam/{exam}/bulk",         [\App\Http\Controllers\Academic\ReportCardController::class, "bulk"])->name("report-cards.bulk");
 });

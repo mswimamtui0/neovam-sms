@@ -28,3 +28,7 @@ require __DIR__ . "/shared.php";
 require __DIR__ . "/parent.php";
 require __DIR__ . "/student.php";
 require __DIR__ . "/auth.php";
+// SMS Delivery Webhook (called by SMS gateway, no auth)
+Route::post("/sms/delivery-webhook", [\App\Http\Controllers\Admin\SmsDeliveryController::class, "webhook"])
+    ->name("sms.delivery-webhook");
+Route::get("/offline", fn() => view("offline"))->name("offline");

@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             LevelSeeder::class,
             SubjectSeeder::class,
             DemoUsersSeeder::class,
+            SmsTemplateSeeder::class,
         ]);
     }
 }

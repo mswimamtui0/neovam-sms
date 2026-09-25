@@ -1,7 +1,7 @@
 @extends("layouts.app")
-@section("title", "Children Incidents")
+@section("title", "Incidents")
 @section("content")
-    <h1 class="text-3xl font-bold text-blue-900 mb-6">Incidents</h1>
+    <h1 class="text-3xl font-bold text-blue-900 mb-6">Incidents Reported</h1>
     <div class="bg-white rounded shadow overflow-hidden">
         <table class="w-full text-sm">
             <thead class="bg-blue-900 text-white">

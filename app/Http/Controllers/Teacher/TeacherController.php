@@ -255,12 +255,14 @@ class TeacherController extends Controller
     public function storeReport(Request $request)
     {
         $data = $request->validate([
-            "report_type" => "required|in:daily,weekly,monthly,termly",
-            "week_start"  => "required|date",
-            "week_end"    => "required|date|after_or_equal:week_start",
-            "summary"     => "required|string",
-            "challenges"  => "nullable|string",
-            "next_plan"   => "nullable|string",
+            "report_type"     => "required|in:daily,weekly,monthly,termly",
+            "week_start"      => "required|date",
+            "week_end"        => "required|date|after_or_equal:week_start",
+            "summary"         => "required|string",
+            "challenges"      => "nullable|string",
+            "next_plan"       => "nullable|string",
+            "periods_taught"  => "nullable|integer|min:0",
+            "students_absent" => "nullable|integer|min:0",
         ]);
 
         $data["staff_id"] = $this->staff()?->id;

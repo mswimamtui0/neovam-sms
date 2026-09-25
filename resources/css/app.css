@@ -1,3 +1,37 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* ============================================
+   NEOVAM SMS — Custom Styles
+   ============================================ */
+
+.sb-link {
+    display: block;
+    padding: 0.4rem 0.75rem 0.4rem 1.75rem;
+    border-radius: 0.25rem;
+    color: #dbeafe;
+    text-decoration: none;
+    font-size: 0.8rem;
+}
+.sb-link:hover { background-color: #1e40af; color: #fff; }
+.sb-link.active { background-color: #1e40af; color: #fff; font-weight: 600; }
+
+.sb-group {
+    padding: 0.75rem 1rem 0.25rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #93c5fd;
+    font-weight: 700;
+}
+
+.sb-top {
+    display: block;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+.sb-top:hover { background-color: #1e40af; }
+.sb-top.active { background-color: #1e40af; font-weight: 600; }

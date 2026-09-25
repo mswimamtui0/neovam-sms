@@ -19,6 +19,9 @@ class DemoUsersSeeder extends Seeder
             return;
         }
 
+
+
+        
         $defaultPassword = Hash::make("Password123!");
 
         /* ============================================

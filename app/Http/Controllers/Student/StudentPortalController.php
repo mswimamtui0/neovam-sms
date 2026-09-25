@@ -9,7 +9,10 @@ class StudentPortalController extends Controller
 {
     protected function me(): ?Student
     {
-        return Student::where("user_id", auth()->id())->first();
+        return Student::withoutGlobalScopes()
+            ->where("user_id", auth()->id())
+            ->where("can_login", true)
+            ->first();
     }
 
     public function dashboard()
@@ -25,7 +28,6 @@ class StudentPortalController extends Controller
     {
         $student = $this->me();
         if (!$student) return redirect()->route("student.dashboard");
-
         $student->load("results.exam");
         return view("student.results", compact("student"));
     }
@@ -34,7 +36,6 @@ class StudentPortalController extends Controller
     {
         $student = $this->me();
         if (!$student) return redirect()->route("student.dashboard");
-
         $student->load("attendances");
         return view("student.attendance", compact("student"));
     }

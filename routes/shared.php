@@ -14,4 +14,9 @@ Route::middleware(["auth", "role:teacher,teacher_on_duty,academic_master,head_of
         Route::get("/duty-roster",      [StaffSharedController::class, "dutyRoster"])->name("duty-roster");
         Route::get("/announcements",    [StaffSharedController::class, "announcements"])->name("announcements");
         Route::get("/directory",        [StaffSharedController::class, "directory"])->name("directory");
-    });
+    
+    /* ============ MY ATTENDANCE ============ */
+    Route::get("/my-attendance",                [\App\Http\Controllers\Shared\StaffAttendanceController::class, "myAttendance"])->name("my-attendance");
+    Route::post("/my-attendance/check-in",      [\App\Http\Controllers\Shared\StaffAttendanceController::class, "checkIn"])->name("my-attendance.check-in");
+    Route::post("/my-attendance/check-out",     [\App\Http\Controllers\Shared\StaffAttendanceController::class, "checkOut"])->name("my-attendance.check-out");
+});

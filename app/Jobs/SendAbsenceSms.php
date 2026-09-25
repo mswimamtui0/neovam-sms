@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Jobs;
 
 use App\Services\Sms\SmsService;
@@ -21,7 +20,9 @@ class SendAbsenceSms implements ShouldQueue
 
     public function handle(SmsService $sms): void
     {
-        $message = "Dear Parent, your child {$this->studentName} was not in school today ({$this->date}). Please contact the school.";
-        $sms->send($this->parentPhone, $message, 'absence');
+        $sms->sendTemplate($this->parentPhone, "absence", [
+            "student_name" => $this->studentName,
+            "date"         => $this->date,
+        ], "en");
     }
 }
