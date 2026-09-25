@@ -5,20 +5,20 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void
-    {
-        Schema::create("staff_subjects", function (Blueprint $table) {
-            $table->id();
-            $table->foreignId("staff_id")->constrained("staff")->cascadeOnDelete();
-            $table->foreignId("subject_id")->constrained()->cascadeOnDelete();
-            $table->timestamps();
+ public function up(): void
+ {
+ Schema::create("staff_subjects", function (Blueprint $table) {
+ $table->id();
+ $table->foreignId("staff_id")->constrained("staff")->cascadeOnDelete();
+ $table->foreignId("subject_id")->constrained()->cascadeOnDelete();
+ $table->timestamps();
 
-            $table->unique(["staff_id", "subject_id"]);
-        });
-    }
+ $table->unique(["staff_id", "subject_id"]);
+ });
+ }
 
-    public function down(): void
-    {
-        Schema::dropIfExists("staff_subjects");
-    }
+ public function down(): void
+ {
+ Schema::dropIfExists("staff_subjects");
+ }
 };

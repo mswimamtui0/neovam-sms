@@ -4,19 +4,19 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void {
-        Schema::create("syllabus_coverage", function (Blueprint $table) {
-            $table->id();
-            $table->foreignId("classroom_id")->constrained()->cascadeOnDelete();
-            $table->foreignId("subject_id")->constrained()->cascadeOnDelete();
-            $table->foreignId("staff_id")->nullable()->constrained("staff")->nullOnDelete();
-            $table->string("term");
-            $table->integer("year");
-            $table->integer("planned_topics")->default(0);
-            $table->integer("covered_topics")->default(0);
-            $table->text("notes")->nullable();
-            $table->timestamps();
-        });
-    }
-    public function down(): void { Schema::dropIfExists("syllabus_coverage"); }
+ public function up(): void {
+ Schema::create("syllabus_coverage", function (Blueprint $table) {
+ $table->id();
+ $table->foreignId("classroom_id")->constrained()->cascadeOnDelete();
+ $table->foreignId("subject_id")->constrained()->cascadeOnDelete();
+ $table->foreignId("staff_id")->nullable()->constrained("staff")->nullOnDelete();
+ $table->string("term");
+ $table->integer("year");
+ $table->integer("planned_topics")->default(0);
+ $table->integer("covered_topics")->default(0);
+ $table->text("notes")->nullable();
+ $table->timestamps();
+ });
+ }
+ public function down(): void { Schema::dropIfExists("syllabus_coverage"); }
 };

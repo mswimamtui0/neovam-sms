@@ -2,97 +2,147 @@
 
 namespace App\Services\Sms;
 
+use App\Models\SmsControlSetting;
 use App\Models\SmsLog;
+use App\Models\SmsSkippedMessage;
 use App\Models\SmsTemplate;
+use App\Models\SmsTriggerSetting;
 
 class SmsService
 {
-    public const SINGLE_MAX = 160;
-    public const MULTI_PART_MAX = 153;
+ public const SINGLE_MAX = 160;
+ public const MULTI_PART_MAX = 153;
 
-    public function __construct(
-        protected NeovamGateway $gateway
-    ) {}
+ public function __construct(
+ protected NeovamGateway $gateway
+ ) {}
 
-    public static function calculateUnits(string $message): int
-    {
-        $len = mb_strlen($message);
-        if ($len === 0) return 0;
-        if ($len <= self::SINGLE_MAX) return 1;
-        return (int) ceil($len / self::MULTI_PART_MAX);
-    }
+ public static function calculateUnits(string $message): int
+ {
+ $len = mb_strlen($message);
+ if ($len === 0) return 0;
+ if ($len <= self::SINGLE_MAX) return 1;
+ return (int) ceil($len / self::MULTI_PART_MAX);
+ }
 
-    public function send(string $to, string $message, string $trigger = "general"): bool
-    {
-        $charCount = mb_strlen($message);
-        $units     = self::calculateUnits($message);
+ /**
+ * Send an SMS with all gate checks.
+ */
+ public function send(string $to, string $message, string $trigger = "general"): bool
+ {
+ // ============ GATE 1: Trigger enabled? ============
+ $triggerEnabled = SmsTriggerSetting::enabled($trigger);
 
-        $log = SmsLog::create([
-            "recipient"       => $to,
-            "message"         => $message,
-            "trigger"         => $trigger,
-            "units"           => $units,
-            "char_count"      => $charCount,
-            "status"          => "pending",
-            "delivery_status" => "pending",
-        ]);
+ // ============ GATE 2: Master switch ============
+ $masterOn = SmsControlSetting::masterEnabled();
 
-        $result = $this->gateway->send($to, $message);
+ // ============ GATE 3: Test mode ============
+ $testMode = SmsControlSetting::testMode();
 
-        if ($result["success"]) {
-            $log->markSent($result["reference"] ?? null);
+ // ============ GATE 4: Schedule ============
+ $insideSchedule = SmsControlSetting::insideScheduleWindow();
 
-            // Record cost as a balance debit
-            try {
-                \App\Services\Sms\SmsCostService::debit(
-                    $units,
-                    $result["reference"] ?? null,
-                    "SMS to {$to} ({$trigger})"
-                );
-                // Save cost on the log
-                $log->update([
-                    "cost" => \App\Services\Sms\SmsCostService::cost($units),
-                ]);
-            } catch (\Throwable $e) {
-                \Log::warning("SMS cost recording failed", ["error" => $e->getMessage()]);
-            }
+ // ============ GATE 5: Rate limits ============
+ $hourlyCount = SmsLog::where("created_at", ">=", now()->subHour())->count();
+ $dailyCount = SmsLog::whereDate("created_at", now()->toDateString())->count();
+ $withinRate = $hourlyCount < SmsControlSetting::rateLimitPerHour()
+ && $dailyCount < SmsControlSetting::rateLimitPerDay();
 
-            // If gateway already returned delivered status, mark it
-            if (!empty($result["delivered"])) {
-                $log->markDelivered();
-            }
+ // ============ DECISION ============
+ $skipReason = null;
+ if (!$triggerEnabled) $skipReason = "trigger_off";
+ elseif (!$masterOn) $skipReason = "master_off";
+ elseif (!$insideSchedule) $skipReason = "schedule";
+ elseif (!$withinRate) $skipReason = "rate_limit";
 
-            return true;
-        }
+ if ($skipReason) {
+ // Log skipped message
+ SmsSkippedMessage::create([
+ "recipient" => $to,
+ "message" => $message,
+ "trigger" => $trigger,
+ "skip_reason" => $skipReason,
+ "would_have_sent_at" => now(),
+ ]);
+ return false;
+ }
 
-        $log->markFailed($result["error"] ?? "Unknown error", $result["error_code"] ?? null);
-        return false;
-    }
+ // ============ TEST MODE ============
+ if ($testMode) {
+ $charCount = mb_strlen($message);
+ $units = self::calculateUnits($message);
 
-    public function sendTemplate(string $to, string $key, array $data = [], string $language = "en"): bool
-    {
-        $message = SmsTemplate::render($key, $data, $language);
+ SmsLog::create([
+ "recipient" => $to,
+ "message" => $message,
+ "trigger" => $trigger . "_test",
+ "units" => $units,
+ "char_count" => $charCount,
+ "status" => "test",
+ "delivery_status" => "test",
+ ]);
+ return true;
+ }
 
-        if (!$message) {
-            \Log::warning("SMS template not found", ["key" => $key, "language" => $language]);
-            return false;
-        }
+ // ============ ACTUAL SEND ============
+ $charCount = mb_strlen($message);
+ $units = self::calculateUnits($message);
 
-        return $this->send($to, $message, $key);
-    }
+ $log = SmsLog::create([
+ "recipient" => $to,
+ "message" => $message,
+ "trigger" => $trigger,
+ "units" => $units,
+ "char_count" => $charCount,
+ "status" => "pending",
+ "delivery_status" => "pending",
+ ]);
 
-    public static function preview(string $message, int $recipientCount): array
-    {
-        $units = self::calculateUnits($message);
-        return [
-            "units"       => $units,
-            "recipients"  => $recipientCount,
-            "total_units" => $units * $recipientCount,
-        ];
-    }
+ $result = $this->gateway->send($to, $message);
 
-    public function gateway(): NeovamGateway
-    {
-        return $this->gateway;
-    }
+ if ($result["success"]) {
+ $log->markSent($result["reference"] ?? null);
+
+ try {
+ \App\Services\Sms\SmsCostService::debit(
+ $units,
+ $result["reference"] ?? null,
+ "SMS to {$to} ({$trigger})"
+ );
+ $log->update(["cost" => \App\Services\Sms\SmsCostService::cost($units)]);
+ } catch (\Throwable $e) {
+ \Log::warning("SMS cost recording failed", ["error" => $e->getMessage()]);
+ }
+
+ return true;
+ }
+
+ $log->markFailed($result["error"] ?? "Unknown error");
+ return false;
+ }
+
+ public function sendTemplate(string $to, string $key, array $data = [], string $language = "en"): bool
+ {
+ $message = SmsTemplate::render($key, $data, $language);
+ if (!$message) {
+ \Log::warning("SMS template not found", ["key" => $key, "language" => $language]);
+ return false;
+ }
+ return $this->send($to, $message, $key);
+ }
+
+ public static function preview(string $message, int $recipientCount): array
+ {
+ $units = self::calculateUnits($message);
+ return [
+ "units" => $units,
+ "recipients" => $recipientCount,
+ "total_units" => $units * $recipientCount,
+ ];
+ }
+
+ public function gateway(): NeovamGateway
+ {
+ return $this->gateway;
+ }
 }

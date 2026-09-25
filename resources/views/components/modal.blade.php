@@ -1,6 +1,6 @@
 @props([
  'name',
- 'show' => false,
+ 'show' =>false,
  'maxWidth' => '2xl'
 ])
 
@@ -34,7 +34,7 @@ $maxWidth = [
  x-init="$watch('show', value => {
  if (value) {
  document.body.classList.add('overflow-y-hidden');
- {{ $attributes->has('focusable') ? 'setTimeout(() => firstFocusable().focus(), 100)' : '' }}
+ {{ $attributes->has('focusable') ? 'setTimeout(() =>firstFocusable().focus(), 100)' : '' }}
  } else {
  document.body.classList.remove('overflow-y-hidden');
  }
@@ -63,7 +63,7 @@ $maxWidth = [
  <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
  </div>
 
- <div
+<div
  x-show="show"
  class="mb-6 bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:w-full {{ $maxWidth }} sm:mx-auto"
  x-transition:enter="ease-out duration-300"

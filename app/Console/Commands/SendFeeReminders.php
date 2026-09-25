@@ -7,17 +7,17 @@ use Illuminate\Console\Command;
 
 class SendFeeReminders extends Command
 {
-    protected $signature   = "fees:send-reminders";
-    protected $description = "Send fee reminder SMS to parents with outstanding balances";
+ protected $signature = "fees:send-reminders";
+ protected $description = "Send fee reminder SMS to parents with outstanding balances";
 
-    public function handle(): int
-    {
-        $this->info("Scanning for pending fee reminders...");
+ public function handle(): int
+ {
+ $this->info("Scanning for pending fee reminders...");
 
-        $result = FeeReminderService::sendAll();
+ $result = FeeReminderService::sendAll();
 
-        $this->info("Sent: {$result["sent"]} | Skipped: {$result["skipped"]}");
+ $this->info("Sent: {$result["sent"]} | Skipped: {$result["skipped"]}");
 
-        return self::SUCCESS;
-    }
+ return self::SUCCESS;
+ }
 }

@@ -9,32 +9,32 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles;
+ use HasFactory, Notifiable, HasRoles;
 
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'phone',
-        'role_title',
-        'school_id',
-    ];
+ protected $fillable = [
+ 'name',
+ 'email',
+ 'password',
+ 'phone',
+ 'role_title',
+ 'school_id',
+ ];
 
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+ protected $hidden = [
+ 'password',
+ 'remember_token',
+ ];
 
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-        ];
-    }
+ protected function casts(): array
+ {
+ return [
+ 'email_verified_at' => 'datetime',
+ 'password' => 'hashed',
+ ];
+ }
 
-    public function school()
-    {
-        return $this->belongsTo(School::class);
-    }
+ public function school()
+ {
+ return $this->belongsTo(School::class);
+ }
 }

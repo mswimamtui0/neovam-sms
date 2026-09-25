@@ -10,28 +10,28 @@ use Illuminate\Queue\SerializesModels;
 
 class SendWelcomeSms implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+ use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(
-        public string $parentPhone,
-        public string $studentName,
-        public string $admissionNo,
-        public string $className,
-        public string $level,
-        public ?float $feeAmount = null,
-    ) {}
+ public function __construct(
+ public string $parentPhone,
+ public string $studentName,
+ public string $admissionNo,
+ public string $className,
+ public string $level,
+ public ?float $feeAmount = null,
+ ) {}
 
-    public function handle(SmsService $sms): void
-    {
-        $school = \App\Models\School::first();
+ public function handle(SmsService $sms): void
+ {
+ $school = \App\Models\School::first();
 
-        $sms->sendTemplate($this->parentPhone, "welcome", [
-            "school_name"  => $school?->name ?? "the school",
-            "student_name" => $this->studentName,
-            "admission_no" => $this->admissionNo,
-            "class_name"   => $this->className,
-            "level"        => $this->level,
-            "fee"          => $this->feeAmount ? number_format($this->feeAmount) : "0",
-        ], "en");
-    }
+ $sms->sendTemplate($this->parentPhone, "welcome", [
+ "school_name" => $school?->name ?? "the school",
+ "student_name" => $this->studentName,
+ "admission_no" => $this->admissionNo,
+ "class_name" => $this->className,
+ "level" => $this->level,
+ "fee" => $this->feeAmount ? number_format($this->feeAmount) : "0",
+ ], "en");
+ }
 }

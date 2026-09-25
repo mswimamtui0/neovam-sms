@@ -4,21 +4,21 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void {
-        Schema::create("invoices", function (Blueprint $table) {
-            $table->id();
-            $table->foreignId("school_id")->constrained()->cascadeOnDelete();
-            $table->foreignId("student_id")->constrained()->cascadeOnDelete();
-            $table->string("invoice_no")->unique();
-            $table->string("term");
-            $table->integer("year");
-            $table->decimal("amount", 12, 2);
-            $table->decimal("amount_paid", 12, 2)->default(0);
-            $table->decimal("balance", 12, 2);
-            $table->date("due_date")->nullable();
-            $table->string("status")->default("pending"); // pending, partial, paid, overdue
-            $table->timestamps();
-        });
-    }
-    public function down(): void { Schema::dropIfExists("invoices"); }
+ public function up(): void {
+ Schema::create("invoices", function (Blueprint $table) {
+ $table->id();
+ $table->foreignId("school_id")->constrained()->cascadeOnDelete();
+ $table->foreignId("student_id")->constrained()->cascadeOnDelete();
+ $table->string("invoice_no")->unique();
+ $table->string("term");
+ $table->integer("year");
+ $table->decimal("amount", 12, 2);
+ $table->decimal("amount_paid", 12, 2)->default(0);
+ $table->decimal("balance", 12, 2);
+ $table->date("due_date")->nullable();
+ $table->string("status")->default("pending"); // pending, partial, paid, overdue
+ $table->timestamps();
+ });
+ }
+ public function down(): void { Schema::dropIfExists("invoices"); }
 };

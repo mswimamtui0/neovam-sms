@@ -59,4 +59,6 @@ yarn-error.log
 # ============ Temporary ============
 *.log
 *.tmp
-/storage/debugbar
+/storage/debugbardatabase/database.sqlite
+vendor/
+node_modules/

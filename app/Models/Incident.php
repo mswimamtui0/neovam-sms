@@ -7,19 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class Incident extends Model
 {
-    use HasFactory;
+ use HasFactory;
 
-    protected $fillable = [
-        'student_id', 'type', 'description',
-        'reported_by', 'sms_sent',
-    ];
+ protected $fillable = [
+ 'student_id', 'type', 'description',
+ 'reported_by', 'sms_sent',
+ ];
 
-    protected $casts = [
-        'sms_sent' => 'boolean',
-    ];
+ protected $casts = [
+ 'sms_sent' => 'boolean',
+ ];
 
-    public function student()
-    {
-        return $this->belongsTo(Student::class);
-    }
+ public function student()
+ {
+ return $this->belongsTo(Student::class);
+ }
 }

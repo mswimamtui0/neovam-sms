@@ -10,21 +10,21 @@ use Illuminate\Queue\SerializesModels;
 
 class SendResultSms implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+ use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(
-        public string $parentPhone,
-        public string $studentName,
-        public string $examName,
-        public string $summary,
-    ) {}
+ public function __construct(
+ public string $parentPhone,
+ public string $studentName,
+ public string $examName,
+ public string $summary,
+ ) {}
 
-    public function handle(SmsService $sms): void
-    {
-        $sms->sendTemplate($this->parentPhone, "result", [
-            "student_name" => $this->studentName,
-            "exam_name"    => $this->examName,
-            "summary"      => $this->summary,
-        ], "en");
-    }
+ public function handle(SmsService $sms): void
+ {
+ $sms->sendTemplate($this->parentPhone, "result", [
+ "student_name" => $this->studentName,
+ "exam_name" => $this->examName,
+ "summary" => $this->summary,
+ ], "en");
+ }
 }
