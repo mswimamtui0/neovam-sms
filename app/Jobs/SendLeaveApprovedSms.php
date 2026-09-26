@@ -8,17 +8,15 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
 class SendLeaveApprovedSms implements ShouldQueue {
- use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
- public function __construct(
- public string $phone,
- public string $staffName,
- public string $startDate,
- public string $endDate,
- ) {}
-
- public function handle(SmsService $sms): void {
- $message = "Dear {$this->staffName}, your leave from {$this->startDate} to {$this->endDate} has been APPROVED.";
- $sms->send($this->phone, $message, "leave_approved");
- }
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    public function __construct(
+        public string $phone,
+        public string $staffName,
+        public string $startDate,
+        public string $endDate,
+    ) {}
+    public function handle(SmsService $sms): void {
+        $msg = "Dear {$this->staffName}, your leave from {$this->startDate} to {$this->endDate} has been APPROVED.";
+        $sms->send($this->phone, $msg, "leave_approved");
+    }
 }

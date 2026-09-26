@@ -7,197 +7,206 @@ use Illuminate\Support\Facades\Log;
 
 class NeovamGateway
 {
- protected ?string $url;
- protected ?string $key;
- protected ?string $secret;
- protected string $sender;
- protected string $environment;
- protected bool $testMode;
+    protected ?string $baseUrl;
+    protected ?string $clientId;
+    protected ?string $secret;
+    protected string  $sender;
+    protected string  $environment;
+    protected bool    $testMode;
+    protected int     $timeout;
 
- public function __construct()
- {
- $this->url = config("services.neovam_sms.url");
- $this->key = config("services.neovam_sms.key");
- $this->secret = config("services.neovam_sms.secret");
- $this->sender = config("services.neovam_sms.sender", "NEOVAM");
- $this->environment = config("services.neovam_sms.environment", "sandbox");
- $this->testMode = (bool) config("services.neovam_sms.test_mode", true);
- }
+    public function __construct()
+    {
+        $this->baseUrl     = rtrim(config("services.neovam_sms.url", ""), "/");
+        $this->clientId    = config("services.neovam_sms.client_id");
+        $this->secret      = config("services.neovam_sms.key");
+        $this->sender      = config("services.neovam_sms.sender", "NEOVAM");
+        $this->environment = config("services.neovam_sms.environment", "production");
+        $this->testMode    = (bool) config("services.neovam_sms.test_mode", false);
+        $this->timeout     = (int) config("services.neovam_sms.timeout", 8);
+    }
 
- /**
- * Send an SMS. Returns [success (bool), reference (string|null), error (string|null)]
- */
- public function send(string $to, string $message): array
- {
- // 1. Normalize phone number to international format
- $to = $this->normalizePhone($to);
- if (!$to) {
- Log::warning("SMS skipped — invalid phone", ["original" => func_get_args()[0] ?? null]);
- return ["success" => false, "reference" => null, "error" => "invalid_phone"];
- }
+    /**
+     * Send an SMS via NEOVAM gateway.
+     *
+     * Signature formula (VERIFIED WORKING):
+     *   material  = timestamp + "." + body
+     *   signature = HMAC-SHA256(secret, material) as lowercase hex
+     */
+    public function send(string $to, string $message, string $eventType = "GENERAL"): array
+    {
+        // 1. Normalize phone
+        $originalPhone = $to;
+        $to = $this->normalizePhone($to);
+        if (!$to) {
+            Log::warning("SMS skipped — invalid phone", ["original" => $originalPhone]);
+            return ["success" => false, "reference" => null, "error" => "invalid_phone"];
+        }
 
- // 2. Sanitize message
- $message = trim(strip_tags($message));
- $message = mb_substr($message, 0, 500);
+        // 2. Sanitize
+        $message = trim(strip_tags($message));
+        $message = mb_substr($message, 0, 500);
 
- // 3. Test mode — simulate without hitting real gateway
- if ($this->testMode) {
- Log::info("SMS TEST MODE (not sent)", [
- "to" => $to,
- "sender" => $this->sender,
- "message" => $message,
- "chars" => mb_strlen($message),
- ]);
- return [
- "success" => true,
- "reference" => "TEST-" . strtoupper(uniqid()),
- "error" => null,
- ];
- }
+        // 3. Test mode
+        if ($this->testMode) {
+            Log::info("SMS TEST MODE (not sent)", [
+                "to"    => $to,
+                "event" => $eventType,
+                "chars" => mb_strlen($message),
+            ]);
+            return [
+                "success"   => true,
+                "reference" => "TEST-" . strtoupper(uniqid()),
+                "error"     => null,
+                "status"    => "SENT",
+            ];
+        }
 
- // 4. If not configured, log and exit gracefully
- if (!$this->url || !$this->key) {
- Log::warning("SMS gateway not configured — message not sent", [
- "to" => $to, "message" => $message,
- ]);
- return ["success" => false, "reference" => null, "error" => "not_configured"];
- }
+        // 4. Config check
+        if (!$this->baseUrl || !$this->clientId || !$this->secret) {
+            Log::warning("SMS gateway not configured", [
+                "url_set"    => (bool) $this->baseUrl,
+                "client_set" => (bool) $this->clientId,
+                "secret_set" => (bool) $this->secret,
+            ]);
+            return ["success" => false, "reference" => null, "error" => "not_configured"];
+        }
 
- // 5. Build the payload
- $payload = [
- "sender" => $this->sender,
- "to" => $to,
- "message" => $message,
- ];
+        // 5. Build payload
+        $payload = [
+            "to"         => $to,
+            "message"    => $message,
+            "event_type" => $eventType,
+        ];
 
- // 6. Optional HMAC signature
- $headers = [
- "Authorization" => "Bearer " . $this->key,
- "Accept" => "application/json",
- "Content-Type" => "application/json",
- ];
+        // 6. Compact JSON — sign exact bytes
+        $body = json_encode($payload);
 
- if ($this->secret) {
- $timestamp = time();
- $signature = hash_hmac("sha256", $to . $message . $timestamp, $this->secret);
- $headers["X-Signature"] = $signature;
- $headers["X-Timestamp"] = $timestamp;
- }
+        // 7. Sign: HMAC-SHA256(secret, timestamp + "." + body)
+        $timestamp = (string) time();
+        $signature = hash_hmac("sha256", $timestamp . "." . $body, $this->secret);
 
- // 7. Fire request
- try {
- $response = Http::withHeaders($headers)
- ->timeout(20)
- ->post($this->url, $payload);
+        // 8. Idempotency key
+        $idempotencyKey = $eventType . ":" . $to . ":" . now()->format("YmdHis");
 
- if ($response->successful()) {
- $reference = $response->json("id")
- ?? $response->json("reference")
- ?? $response->json("message_id")
- ?? null;
+        // 9. Endpoint
+        $endpoint = $this->baseUrl;
+        if (!str_ends_with($endpoint, "/v1/messages")) {
+            $endpoint .= "/v1/messages";
+        }
 
- return [
- "success" => true,
- "reference" => $reference,
- "error" => null,
- "delivered" => (bool) ($response->json("delivered") ?? false),
- "network" => $response->json("network") ?? null,
- ];
- }
+        // 10. Fire
+        try {
+            $response = Http::withHeaders([
+                "Content-Type"    => "application/json",
+                "Accept"          => "application/json",
+                "X-Client-ID"     => $this->clientId,
+                "X-Timestamp"     => $timestamp,
+                "X-Signature"     => $signature,
+                "Idempotency-Key" => $idempotencyKey,
+            ])
+            ->timeout($this->timeout)
+            ->withBody($body, "application/json")
+            ->post($endpoint);
 
- Log::warning("SMS gateway non-2xx", [
- "to" => $to,
- "status" => $response->status(),
- "body" => substr($response->body(), 0, 500),
- ]);
+            if ($response->successful()) {
+                $json = $response->json() ?? [];
 
- return [
- "success" => false,
- "reference" => null,
- "error" => "http_" . $response->status(),
- ];
+                return [
+                    "success"   => true,
+                    "reference" => $json["request_id"] ?? $json["provider_message_id"] ?? $json["message_id"] ?? null,
+                    "error"     => null,
+                    "status"    => $json["status"] ?? "SENT",
+                    "raw"       => $json,
+                    "network"   => $json["network"] ?? null,
+                ];
+            }
 
- } catch (\Throwable $e) {
- Log::error("SMS gateway exception", [
- "to" => $to,
- "message" => $e->getMessage(),
- ]);
+            Log::warning("NEOVAM SMS non-2xx", [
+                "to"     => $to,
+                "status" => $response->status(),
+                "body"   => substr($response->body(), 0, 500),
+            ]);
 
- return ["success" => false, "reference" => null, "error" => "exception"];
- }
- }
+            return [
+                "success"   => false,
+                "reference" => null,
+                "error"     => "http_" . $response->status(),
+            ];
 
- /**
- * Check gateway balance (if your provider supports it).
- * Returns [success, balance, currency] or [false, null, null].
- */
- public function balance(): array
- {
- if ($this->testMode) {
- return ["success" => true, "balance" => 999999, "currency" => "TZS"];
- }
+        } catch (\Throwable $e) {
+            Log::error("NEOVAM SMS exception", [
+                "to"      => $to,
+                "message" => $e->getMessage(),
+            ]);
 
- if (!$this->url || !$this->key) {
- return ["success" => false, "balance" => null, "currency" => null];
- }
+            return ["success" => false, "reference" => null, "error" => "exception"];
+        }
+    }
 
- try {
- $base = rtrim($this->url, "/");
- $base = preg_replace('/\/send$/', '', $base);
+    public function balance(): array
+    {
+        if ($this->testMode) {
+            return ["success" => true, "balance" => 999999, "currency" => "TZS"];
+        }
+        if (!$this->baseUrl || !$this->clientId || !$this->secret) {
+            return ["success" => false, "balance" => null, "currency" => null];
+        }
 
- $response = Http::withHeaders([
- "Authorization" => "Bearer " . $this->key,
- "Accept" => "application/json",
- ])->timeout(15)->get($base . "/balance");
+        try {
+            $timestamp = (string) time();
+            $body      = "";
+            $signature = hash_hmac("sha256", $timestamp . "." . $body, $this->secret);
 
- if ($response->successful()) {
- return [
- "success" => true,
- "balance" => $response->json("balance") ?? 0,
- "currency" => $response->json("currency") ?? "TZS",
- ];
- }
- } catch (\Throwable $e) {
- Log::warning("SMS balance check failed", ["error" => $e->getMessage()]);
- }
+            $response = Http::withHeaders([
+                "Accept"      => "application/json",
+                "X-Client-ID" => $this->clientId,
+                "X-Timestamp" => $timestamp,
+                "X-Signature" => $signature,
+            ])->timeout($this->timeout)->get($this->baseUrl . "/v1/balance");
 
- return ["success" => false, "balance" => null, "currency" => null];
- }
+            if ($response->successful()) {
+                return [
+                    "success"  => true,
+                    "balance"  => $response->json("balance") ?? 0,
+                    "currency" => $response->json("currency") ?? "TZS",
+                ];
+            }
+        } catch (\Throwable $e) {
+            Log::warning("Balance check failed", ["error" => $e->getMessage()]);
+        }
 
- /**
- * Normalize a phone number to international format (255XXXXXXXXX).
- */
- protected function normalizePhone(string $phone): ?string
- {
- $digits = preg_replace('/[^0-9]/', '', $phone);
+        return ["success" => false, "balance" => null, "currency" => null];
+    }
 
- if (strlen($digits) < 9) return null;
+    protected function normalizePhone(string $phone): ?string
+    {
+        $digits = preg_replace('/[^0-9]/', '', $phone);
+        if (strlen($digits) < 9) return null;
 
- // Convert 0XXXXXXXXX 255XXXXXXXXX (Tanzania)
- if (strlen($digits) === 10 && $digits[0] === "0") {
- $digits = "255" . substr($digits, 1);
- }
+        if (strlen($digits) === 10 && $digits[0] === "0") {
+            $digits = "255" . substr($digits, 1);
+        }
+        if (strlen($digits) === 9) {
+            return "255" . $digits;
+        }
+        if (strlen($digits) === 12 && str_starts_with($digits, "255")) {
+            return $digits;
+        }
+        if (strlen($digits) >= 10 && strlen($digits) <= 15) {
+            return $digits;
+        }
 
- // Already international (255...)
- if (strlen($digits) === 12 && str_starts_with($digits, "255")) {
- return $digits;
- }
+        return null;
+    }
 
- // Any other length — accept as-is if 10-15 digits
- if (strlen($digits) >= 10 && strlen($digits) <= 15) {
- return $digits;
- }
+    public function isTestMode(): bool
+    {
+        return $this->testMode;
+    }
 
- return null;
- }
-
- public function isTestMode(): bool
- {
- return $this->testMode;
- }
-
- public function environment(): string
- {
- return $this->environment;
- }
+    public function environment(): string
+    {
+        return $this->environment;
+    }
 }

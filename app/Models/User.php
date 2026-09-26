@@ -27,6 +27,17 @@ class User extends Authenticatable
 
  protected function casts(): array
  {
+        return [
+            "email_verified_at"      => "datetime",
+            "password"               => "hashed",
+            "must_change_password"   => "boolean",
+            "credentials_sent_at"    => "datetime",
+            "last_login_at"          => "datetime",
+        ];
+    }
+
+    protected function oldCasts(): array
+    {
  return [
  'email_verified_at' => 'datetime',
  'password' => 'hashed',

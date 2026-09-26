@@ -212,6 +212,12 @@ Route::middleware(["auth", "role:admin,head_of_school"])
  Route::post("/settings/school", [SchoolSettingsController::class, "update"])->name("settings.school.update");
 
  Route::resource("subjects", SubjectController::class);
+
+        // Departments
+        Route::resource("departments", \App\Http\Controllers\Admin\DepartmentController::class);
+
+        // Departments
+        Route::resource("departments", \App\Http\Controllers\Admin\DepartmentController::class);
  });
 
  Route::resource("students", StudentController::class);
@@ -224,6 +230,9 @@ Route::middleware(["auth", "role:admin,head_of_school"])
  Route::post("/students/{student}/enable-login", [StudentController::class, "enableLogin"])->name("students.enable-login");
  Route::post("/students/{student}/disable-login", [StudentController::class, "disableLogin"])->name("students.disable-login");
  Route::resource("staff", StaffController::class);
+    Route::get("/api/subjects-by-department", [StaffController::class, "subjectsByDepartment"])->name("staff.subjects.byDepartment");
+    Route::post("/staff/{staff}/resend-credentials", [StaffController::class, "resendCredentials"])->name("staff.resend-credentials");
+    Route::post("/staff/{staff}/reset-password",     [StaffController::class, "resetPassword"])->name("staff.reset-password");
 
  Route::get("/attendance", [AttendanceController::class, "index"])->name("attendance.index");
  Route::get("/attendance/create", [AttendanceController::class, "create"])->name("attendance.create");

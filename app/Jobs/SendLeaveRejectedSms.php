@@ -8,16 +8,14 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
 class SendLeaveRejectedSms implements ShouldQueue {
- use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
- public function __construct(
- public string $phone,
- public string $staffName,
- public string $reason,
- ) {}
-
- public function handle(SmsService $sms): void {
- $message = "Dear {$this->staffName}, your leave request has been REJECTED. Reason: {$this->reason}.";
- $sms->send($this->phone, $message, "leave_rejected");
- }
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    public function __construct(
+        public string $phone,
+        public string $staffName,
+        public string $reason,
+    ) {}
+    public function handle(SmsService $sms): void {
+        $msg = "Dear {$this->staffName}, your leave request has been REJECTED. Reason: {$this->reason}.";
+        $sms->send($this->phone, $msg, "leave_rejected");
+    }
 }

@@ -35,3 +35,14 @@
 }
 .sb-top:hover { background-color: #1e40af; }
 .sb-top.active { background-color: #1e40af; font-weight: 600; }
+
+/* Sidebar section titles — visible on dark blue background */
+.sb-section-title {
+    padding: 14px 16px 6px 16px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #ffffff;
+    opacity: 0.7;
+    font-weight: 600;
+}

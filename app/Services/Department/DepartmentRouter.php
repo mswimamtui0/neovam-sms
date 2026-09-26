@@ -6,123 +6,90 @@ use App\Models\Staff;
 
 class DepartmentRouter
 {
- /**
- * Priority order — highest first.
- * If a staff has multiple roles, the highest priority wins for auto-redirect.
- */
- public const PRIORITY = [
- "administration",
- "academic",
- "finance",
- "health",
- "discipline",
- "security",
- "library",
- "boarding",
- "feeding",
- "environment",
- "guidance",
- "sports",
- "duty",
- "class_teacher",
- ];
+    /**
+     * Route map: department role → landing route name.
+     */
+    public const ROUTES = [
+        "academic"       => "teacher.dashboard",
+        "class_teacher"  => "class-teacher.dashboard",
+        "duty"           => "duty.dashboard",
+        "health"         => "department.health",
+        "discipline"     => "department.discipline",
+        "sports"         => "department.sports",
+        "boarding"       => "department.boarding",
+        "feeding"        => "department.feeding",
+        "library"        => "department.library",
+        "guidance"       => "department.guidance",
+        "environment"    => "department.environment",
+        "security"       => "department.security",
+        "finance"        => "admin.dashboard",
+        "administration" => "admin.dashboard",
+    ];
 
- /**
- * Route map — department role => route name.
- */
- public const ROUTES = [
- "health" => "department.health",
- "discipline" => "department.discipline",
- "sports" => "department.sports",
- "boarding" => "department.boarding",
- "feeding" => "department.feeding",
- "library" => "department.library",
- "guidance" => "department.guidance",
- "environment" => "department.environment",
- "security" => "department.security",
- "duty" => "department.duty-redirect",
- "class_teacher"=> "department.class-teacher-redirect",
- "finance" => "department.finance-redirect",
- "academic" => "department.academic-redirect",
- "administration"=> "department.admin-redirect",
- ];
+    /**
+     * Determine the landing route for a staff based on their department_roles.
+     * - No roles → dashboard
+     * - One role → that department
+     * - Multiple → hub page
+     */
+    public static function landingRoute(?Staff $staff): string
+    {
+        if (!$staff) return "dashboard";
 
- /**
- * Determine where a staff should land after login.
- * Returns a route name.
- */
- public static function landingRoute(?Staff $staff): string
- {
- if (!$staff) {
- return "dashboard";
- }
+        $roles = $staff->roleList();
+        if (empty($roles)) return "dashboard";
 
- $roles = $staff->roleList();
+        if (count($roles) > 1) return "department.hub";
 
- if (empty($roles)) {
- return "dashboard";
- }
+        return self::ROUTES[$roles[0]] ?? "dashboard";
+    }
 
- // If more than one role, land on the hub
- if (count($roles) > 1) {
- return "department.hub";
- }
+    /**
+     * Cards for hub page.
+     */
+    public static function cards(?Staff $staff): array
+    {
+        if (!$staff) return [];
 
- // Single role — go directly to that department
- $role = $roles[0];
- return self::ROUTES[$role] ?? "dashboard";
- }
+        $meta = [
+            "academic"      => ["title" => "Academic",          "desc" => "Teaching, lesson plans, marks",         "route" => "teacher.dashboard",            "color" => "blue"],
+            "class_teacher" => ["title" => "Class Teacher",     "desc" => "My class, discipline, welfare",        "route" => "class-teacher.dashboard",      "color" => "green"],
+            "duty"          => ["title" => "Teacher on Duty",   "desc" => "Duty roster, supervision",             "route" => "duty.dashboard",               "color" => "yellow"],
+            "health"        => ["title" => "Health",            "desc" => "Sick students, first aid",              "route" => "department.health",            "color" => "red"],
+            "discipline"    => ["title" => "Discipline",        "desc" => "Behavior, warnings",                    "route" => "department.discipline",        "color" => "orange"],
+            "sports"        => ["title" => "Sports",            "desc" => "Teams, matches, training",              "route" => "department.sports",            "color" => "green"],
+            "boarding"      => ["title" => "Boarding",          "desc" => "Dorms, night duty",                     "route" => "department.boarding",          "color" => "purple"],
+            "feeding"       => ["title" => "Feeding",           "desc" => "Meals, hygiene",                        "route" => "department.feeding",           "color" => "orange"],
+            "library"       => ["title" => "Library",           "desc" => "Books, loans",                          "route" => "department.library",           "color" => "blue"],
+            "guidance"      => ["title" => "Guidance",          "desc" => "Counseling, career",                    "route" => "department.guidance",          "color" => "indigo"],
+            "environment"   => ["title" => "Environment",       "desc" => "Cleanliness, tree planting",            "route" => "department.environment",       "color" => "teal"],
+            "security"      => ["title" => "Security",          "desc" => "Patrol, gate duty",                     "route" => "department.security",          "color" => "gray"],
+            "finance"       => ["title" => "Finance",           "desc" => "Fees, invoices, payments",              "route" => "admin.dashboard",              "color" => "blue"],
+            "administration"=> ["title" => "Administration",    "desc" => "School-wide tools",                     "route" => "admin.dashboard",              "color" => "blue"],
+        ];
 
- /**
- * Get the highest priority role for a staff (used in some flows).
- */
- public static function primaryRole(?Staff $staff): ?string
- {
- if (!$staff) return null;
+        $cards = [];
+        foreach ($staff->roleList() as $role) {
+            if (isset($meta[$role])) {
+                $cards[] = array_merge(["key" => $role], $meta[$role]);
+            }
+        }
 
- $roles = $staff->roleList();
- if (empty($roles)) return null;
+        return $cards;
+    }
 
- foreach (self::PRIORITY as $p) {
- if (in_array($p, $roles, true)) return $p;
- }
-
- return $roles[0];
- }
-
- /**
- * All department cards for the hub page.
- */
- public static function cards(?Staff $staff): array
- {
- if (!$staff) return [];
-
- $roles = $staff->roleList();
- $cards = [];
-
- $meta = [
- "health" => ["title" => "Health", "desc" => "Sick students, first aid, hygiene", "color" => "red", "route" => "department.health"],
- "discipline" => ["title" => "Discipline", "desc" => "Behavior, warnings, detentions", "color" => "yellow", "route" => "department.discipline"],
- "sports" => ["title" => "Sports", "desc" => "Teams, matches, training", "color" => "green", "route" => "department.sports"],
- "boarding" => ["title" => "Boarding", "desc" => "Dorms, night duty, roll calls", "color" => "purple", "route" => "department.boarding"],
- "feeding" => ["title" => "Feeding", "desc" => "Meals, hygiene, menu", "color" => "orange", "route" => "department.feeding"],
- "library" => ["" => "", "title" => "Library", "desc" => "Books, loans, returns", "color" => "blue", "route" => "department.library"],
- "guidance" => ["title" => "Guidance", "desc" => "Counseling, career, welfare", "color" => "indigo", "route" => "department.guidance"],
- "environment" => ["title" => "Environment", "desc" => "Cleanliness, tree planting", "color" => "teal", "route" => "department.environment"],
- "security" => ["title" => "Security", "desc" => "Patrol, gate, drills", "color" => "gray", "route" => "department.security"],
- "duty" => ["title" => "Teacher on Duty", "desc" => "Duty roster, supervision", "color" => "yellow", "route" => "duty.dashboard"],
- "class_teacher"=> ["title" => "Class Teacher", "desc" => "My class, discipline, welfare", "color" => "green", "route" => "class-teacher.dashboard"],
- "finance" => ["title" => "Finance", "desc" => "Fees, invoices, payments", "color" => "blue", "route" => "admin.dashboard"],
- "academic" => ["title" => "Academic", "desc" => "Teaching, lesson plans, marks", "color" => "blue", "route" => "teacher.dashboard"],
- "administration"=>["title" => "Administration", "desc" => "School-wide tools", "color" => "blue", "route" => "admin.dashboard"],
- ];
-
- foreach ($roles as $r) {
- if (isset($meta[$r])) {
- $cards[] = array_merge(["key" => $r], $meta[$r]);
- }
- }
-
- return $cards;
- }
+    /**
+     * Map a single department role to a Spatie role for permissions.
+     */
+    public static function spatieRole(string $deptRole): string
+    {
+        return match ($deptRole) {
+            "academic", "class_teacher", "health", "discipline", "sports",
+            "boarding", "feeding", "library", "guidance", "environment", "security" => "teacher",
+            "duty"           => "teacher_on_duty",
+            "finance"        => "bursar",
+            "administration" => "admin",
+            default          => "staff",
+        };
+    }
 }

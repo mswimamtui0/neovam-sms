@@ -8,18 +8,16 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
 class SendTimetableChangeSms implements ShouldQueue {
- use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
- public function __construct(
- public string $phone,
- public string $recipientName,
- public string $className,
- public string $day,
- public string $period,
- ) {}
-
- public function handle(SmsService $sms): void {
- $message = "Dear {$this->recipientName}, the timetable for {$this->className} has been updated. {$this->day}, {$this->period}. Please check your schedule.";
- $sms->send($this->phone, $message, "timetable_change");
- }
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    public function __construct(
+        public string $phone,
+        public string $recipientName,
+        public string $className,
+        public string $day,
+        public string $period,
+    ) {}
+    public function handle(SmsService $sms): void {
+        $msg = "Dear {$this->recipientName}, the timetable for {$this->className} has been updated: {$this->day}, {$this->period}. Please check.";
+        $sms->send($this->phone, $msg, "timetable_change");
+    }
 }

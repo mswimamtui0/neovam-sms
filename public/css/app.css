@@ -1,0 +1,98 @@
+/* ============================================
+   NEOVAM SMS — Static CSS (no build step needed)
+   ============================================ */
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    background: #f3f4f6;
+    color: #111827;
+}
+
+/* Sidebar section titles */
+.sb-section-title {
+    padding: 14px 16px 6px 16px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #ffffff !important;
+    opacity: 0.75;
+    font-weight: 600;
+}
+
+/* Sidebar top-level links */
+.sb-top {
+    display: block;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    color: #ffffff !important;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+.sb-top:hover {
+    background-color: #1e40af;
+    color: #ffffff !important;
+    opacity: 0.9;
+}
+.sb-top.active {
+    background-color: #1e40af;
+    font-weight: 600;
+}
+
+/* Sidebar sub links */
+.sb-link {
+    display: block;
+    padding: 0.4rem 0.75rem 0.4rem 1.75rem;
+    border-radius: 0.25rem;
+    color: #dbeafe !important;
+    text-decoration: none;
+    font-size: 0.8rem;
+}
+.sb-link:hover {
+    background-color: #1e40af;
+    color: #ffffff !important;
+}
+
+/* Sidebar group labels */
+.sb-group {
+    padding: 0.75rem 1rem 0.25rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #93c5fd;
+    font-weight: 700;
+}
+
+/* Bullet dots */
+.sb-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: #ffffff !important;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+/* Hide section titles that have no visible links after them */
+.sb-section-title:has(+ .sb-section-title) {
+    display: none;
+}
+
+/* Improve spacing: section title when followed by links */
+.sb-section-title {
+    margin-top: 8px;
+}
+/* Emergency badge — subtle pulse animation */
+@keyframes emergency-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.6; }
+}
+#emergency-banner {
+    animation: emergency-pulse 2s ease-in-out infinite;
+}
+
+/* Emergency sidebar badge */
+a[href*="emergencies"] span[style*="background:#dc2626"] {
+    animation: emergency-pulse 1.5s ease-in-out infinite;
+}

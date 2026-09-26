@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendDutyAssignedSms;
 use App\Models\DutyRoster;
 use App\Models\Staff;
 use Illuminate\Http\Request;
@@ -43,6 +44,18 @@ class DutyRosterController extends Controller
  ]);
 
  DutyRoster::create($data);
+
+        // SMS to duty teacher
+        $staff = \App\Models\Staff::find($data["staff_id"]);
+        if ($staff && $staff->phone) {
+            SendDutyAssignedSms::dispatch(
+                $staff->phone,
+                $staff->full_name,
+                $data["duty_date"],
+                ucfirst($data["duty_type"]),
+                ucfirst($data["shift"]),
+            );
+        }
 
  return redirect()->route("admin.duty-rosters.index")->with("success","Duty roster entry added.");
  }
